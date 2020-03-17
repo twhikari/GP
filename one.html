@@ -1,0 +1,179 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+<style>
+body {
+		background-color: #fff;
+		color: #111;
+		margin: 0px;
+		overflow: hidden;
+		font-family: Monospace;
+		font-size: 20px;
+		position: absolute;
+	}
+#info {
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+</style>
+</head>
+<body>
+
+<div id='info'>
+<button id = "toggle" style="width : 15%" onclick="toggleCamera()"> Toggle Change </button>
+</div>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+
+var scene, camera;
+var car;
+var theta = 0;
+var useThirdPersonCamera = false;
+var controls ;
+
+//!$("#toggle").click(function toggleCamera());
+
+function toggleCamera() {
+	useThirdPersonCamera = !useThirdPersonCamera;
+	if(useThirdPersonCamera == false ){
+		controls.enabled = true;
+		camera.position.set(0, 100, 150);
+		camera.lookAt (new THREE.Vector3(0,0,0));
+	}
+	else {
+		controls.enabled = false;
+	}
+}
+
+init();
+animate();
+
+
+function init(){
+	
+	//set up renderer scene camera
+	
+	renderer = new THREE.WebGLRenderer();
+	
+	width = window.innerWidth;
+	height = window.innerHeight;
+	
+	renderer.setSize (width, height);
+	document.body.appendChild (renderer.domElement);//render產生之後塞進HTML
+	//renderer.setClearColor (0x888888);
+	
+	scene = new THREE.Scene();
+	camera = new THREE.PerspectiveCamera (90, 1, 1, 1000);
+	
+	controls = new THREE.OrbitControls (camera, renderer.domElement);
+	camera.position.set(0, 100, 150);
+	camera.lookAt (new THREE.Vector3(0,0,0));
+	
+	//set up objecs in the scene
+	var gridHelper = new THREE.GridHelper( 200, 20,'yellow','brown');
+	scene.add( gridHelper );
+	
+	window.addEventListener ('resize', onWindowResize, false);
+	
+	/////////////////////////////
+	
+	geometry = new THREE.Geometry();
+	geometry.vertices.push(
+	 new THREE.Vector3(31.2,0,0),
+	 new THREE.Vector3(0,11.1,0),
+	 new THREE.Vector3(0,0,-11.1),
+	 new THREE.Vector3(0,0,12.6),
+	);
+	geometry.faces.push(
+	 new THREE.Face3 (0,1,3),
+	 new THREE.Face3 (1,0,2),
+	 new THREE.Face3 (1,2,3),
+	 new THREE.Face3 (0,1,3),
+	);
+	
+	geometry.computeFaceNormals();
+	geometry.computeVertexNormals();
+	car = new THREE.Mesh (geometry, new THREE.MeshNormalMaterial());
+	scene.add (car);
+	
+	geometry2 = new THREE.Geometry();
+	var geometry2 = new THREE.CylinderGeometry(6, 6, 60, 64);
+	geometry2.computeFaceNormals();
+	cylinder  = new THREE.Mesh (geometry2, new THREE.MeshNormalMaterial());
+	scene.add (cylinder);
+	cylinder.position.set(0,30,0)
+	
+	geometry3 = new THREE.Geometry();
+	var geometry3 = new THREE.BoxGeometry(10,60,10);
+	geometry3.computeFaceNormals();
+	
+	box1  = new THREE.Mesh (geometry3, new THREE.MeshBasicMaterial( {color: 0xff00ff}));
+	scene.add (box1);
+	box1.position.set(95,30,95)
+	
+	box2  = new THREE.Mesh (geometry3, new THREE.MeshBasicMaterial( {color: 0xff0000}));
+	scene.add (box2);
+	box2.position.set(-95,30,-95)
+	
+	box3  = new THREE.Mesh (geometry3, new THREE.MeshBasicMaterial( {color: 0x00ff00}));
+	scene.add (box3);
+	box3.position.set(-95,30,95)
+	
+	box4  = new THREE.Mesh (geometry3, new THREE.MeshBasicMaterial( {color: 0xfff0f0}));
+	scene.add (box4);
+	box4.position.set(95,30,-95)
+	
+	var floorTexture = new THREE.TextureLoader().load('https://ti2.kknews.cc/SIG=19cnp35/22q7000116s8rr22r189_s.jpg');
+	floorTexture.wrapS = THREE.RepeatWrapping;
+	floorTexture.wrapT = THREE.RepeatWrapping; 
+	floorTexture.repeat.set( 1, 1 );
+	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
+	
+	var floorGeometry = new THREE.PlaneGeometry(200, 200);
+	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+	floor.position.y = -0.5;
+	floor.rotation.x = Math.PI/2;
+	
+	scene.add(floor);
+	
+}
+
+function onWindowResize() {
+	
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize(window.innerWidth, window.innerHeight);
+
+}
+
+function animate(){
+	renderer.render (scene, camera);
+	
+	theta += 0.02 //theta: radian 0~2pi
+	car.rotation.y = Math.PI/2 + theta;
+	//move the box...
+	car.position.set (60*Math.cos(theta), 0, -60*Math.sin(theta))
+	
+	if (useThirdPersonCamera){
+	//third person caamera
+	var d = Math.PI/6;
+	var h = 50;
+	camera.position.set (60*Math.cos(theta-d), h, -60*Math.sin(theta-d))
+	camera.lookAt (car.position);
+	}
+	
+	requestAnimationFrame (animate);
+}
+
+
+</script>
+
+</body>
+</html>
