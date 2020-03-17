@@ -19,6 +19,14 @@ body {
   text-align: center;
   color: #ffff00
 }
+#info2 {
+  position: absolute;
+  top: 5%;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
 </style>
 </head>
 <body>
@@ -26,10 +34,15 @@ body {
 <div id='info'>
 <button id = "toggle" style="width : 15%" onclick="toggleCamera()"> Toggle Change </button>
 </div>
+<div id="info2">
+	<strong style="color:red;">z</strong> to toggle reverse
+</div>
+
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
+<script src="http://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
 <script>
 
 var scene, camera;
@@ -37,6 +50,8 @@ var car;
 var theta = 0;
 var useThirdPersonCamera = false;
 var controls ;
+var key_z = false;
+var keyboard = new KeyboardState();
 
 //!$("#toggle").click(function toggleCamera());
 
@@ -51,6 +66,19 @@ function toggleCamera() {
 		controls.enabled = false;
 	}
 }
+
+
+
+function update(){
+	//controls.update();
+	keyboard.update();         // this is required; this is a different keyboard callback
+	if ( keyboard.down("Z"))  // must use upper case!!
+		key_z = !key_z;
+		//turn ^= 1;               
+}
+
+
+
 
 init();
 animate();
@@ -118,7 +146,7 @@ function init(){
 	scene.add (box1);
 	box1.position.set(95,30,95)
 	
-	box2  = new THREE.Mesh (geometry3, new THREE.MeshBasicMaterial( {color: 0xff0000}));
+	box2  = new THREE.Mesh (geometry3, new THREE.MeshBasicMaterial( {color: 0xEE7700}));
 	scene.add (box2);
 	box2.position.set(-95,30,-95)
 	
@@ -156,19 +184,35 @@ function onWindowResize() {
 function animate(){
 	renderer.render (scene, camera);
 	
-	theta += 0.02 //theta: radian 0~2pi
-	car.rotation.y = Math.PI/2 + theta;
-	//move the box...
-	car.position.set (60*Math.cos(theta), 0, -60*Math.sin(theta))
+	if(key_z){
+		theta -= 0.02 //theta: radian 0~2pi
+		car.rotation.y = Math.PI/2 + theta;
+		//move the box...
+		car.position.set (60*Math.cos(theta), 0, -60*Math.sin(theta))
 	
-	if (useThirdPersonCamera){
-	//third person caamera
-	var d = Math.PI/6;
-	var h = 50;
-	camera.position.set (60*Math.cos(theta-d), h, -60*Math.sin(theta-d))
-	camera.lookAt (car.position);
+		if (useThirdPersonCamera){
+		//third person caamera
+		var d = Math.PI/6;
+		var h = 60;
+		camera.position.set (60*Math.cos(theta-d), h, -60*Math.sin(theta-d))
+		camera.lookAt (car.position);
+		}
 	}
+	else{
+		theta += 0.02 //theta: radian 0~2pi
+		car.rotation.y = Math.PI/2 + theta;
+		//move the box...
+		car.position.set (60*Math.cos(theta), 0, -60*Math.sin(theta))
 	
+		if (useThirdPersonCamera){
+		//third person caamera
+		var d = Math.PI/6;
+		var h = 60;
+		camera.position.set (60*Math.cos(theta-d), h, -60*Math.sin(theta-d))
+		camera.lookAt (car.position);
+		}
+	}
+	update();
 	requestAnimationFrame (animate);
 }
 
