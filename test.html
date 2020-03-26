@@ -1,5 +1,6 @@
+<!DOCTYPE html>
 <html>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta  charset="utf-8" >
 <head>
 </head>
 <style>
@@ -25,10 +26,13 @@ body {
 
 
 <audio id="collisionsound" autoplay loop style="display:none">
-<source src="https://twhikari.github.io/GP/sound/collision.wav" type='audio/wav'>
+<source src="https://twhikari.github.io/GP/sound/small_drum1.mp3" type='audio/wav'>
 </audio>
-<audio id="soundtrack" autoplay loop style="display:none">
+<audio id="soundtrack"  style="display:none">
 <source src="https://twhikari.github.io/GP/sound/animals.mp3" type='audio/mp3'>
+</audio>
+<audio id="collisionsound2"  style="display:none">
+<source src="https://twhikari.github.io/GP/sound/small_drum1.mp3" type='audio/wav'>
 </audio>
 
 <script>
@@ -46,10 +50,18 @@ $('#play').click ( function() {
 
 function collision_wall(){
   var audio = document.createElement("audio");
-  audio.src = "https://twhikari.github.io/GP/sound/collision.wav";
-  audio.volume = 0.8;
+  audio.src = "https://twhikari.github.io/GP/sound/small_drum1.mp3";
+  audio.volume = 0.1;
   audio.play();
 }
+
+function collisionsound_puck(){
+  var audio = document.createElement("audio");
+  audio.src = "https://twhikari.github.io/GP/sound/pyo1.mp3";
+  audio.volume = 0.1;
+  audio.play();
+}
+
 /*
 function collision_wall(){
   var audio = document.createElement("audio");
@@ -61,7 +73,7 @@ function collision_wall(){
 
 var camera, scene, renderer;
 var pucks;
-//var pos, vel, force =  new THREE.Vector3(0,0,0);;
+var force =  new THREE.Vector3(0,0,0);;
 var walls = [];
 var puck,puckcolor,pucklight; 
 var soundTrack,soundVal = 0.2, sign = 0.1;
@@ -80,39 +92,32 @@ animate();
 
 function init() {
 	
-	//collisionsound = document.getElementById ('collisionsound');
+
 	soundTrack = document.getElementById ('soundtrack');
-	//collisionsound.volume = 0.8;
 	
   class Puck{
 	constructor(pos, vel){
 		this.materialCylinder =  new THREE.MeshLambertMaterial({color:Math.random() * 0xffffff })
 		this.puck = new THREE.Mesh (  new THREE.CylinderGeometry (4, 4, 4, 20), this.materialCylinder );
 		this.puck.position.set ( (Math.random()*-95)+(Math.random()*95), 2, (Math.random()*-95)+(Math.random()*95));
-		this.force = new THREE.Vector3(0, 0, 0);
-		this.vel = new THREE.Vector3(Math.random()*30, 0, Math.random()*30);
+		
+		this.vel = new THREE.Vector3(Math.random()*20, 0, Math.random()*20);
 		this.pos = this.puck.position;
 		scene.add (this.puck);
-		this.pucklight = new THREE.PointLight( this.materialCylinder.color, 1,100);
+		this.pucklight = new THREE.PointLight( this.materialCylinder.color, 1,50);
 		this.pucklight.position.copy (this.puck.position);
 		this.pucklight.position.y += 10;
 		scene.add (this.pucklight);
 		
 	}
 	rebirth() {
-	this.vel.add (this.force.clone().multiplyScalar(dt));
+	this.vel.add (force.clone().multiplyScalar(dt));
 	this.pos.add (this.vel.clone().multiplyScalar(dt));
 	this.pucklight.position.copy (this.puck.position);
 	this.pucklight.position.y += 10;		
 	for (let i = 0; i < walls.length; i++) {
 		let wall = walls[i];	
 		if (this.pos.clone().sub (wall.point).dot (wall.normal) < eps + 4 && this.vel.clone().dot(wall.normal) < 0) {
-		//	let box = new THREE.Box3();
-		//	box.setFromObject(wall);
-		//	let circle = { center: new THREE.Vector3(this.pos.x, 0, this.pos.z), rad: 5 };
-		//	let rect = { min: new THREE.Vector3(box.min.x, 0, box.min.z), max: new THREE.Vector3(box.max.x, 0, box.max.z) };
-							
-		//	if (this.checkIntersect(circle, rect)) {
 			collision_wall();
 			var vN = wall.normal.clone().multiplyScalar(this.vel.dot (wall.normal));
 			var vT = this.vel.clone().sub(vN);
@@ -124,22 +129,6 @@ function init() {
 	
 	  }
   }
-/*
-  vel.add (force.clone().multiplyScalar(dt));
-  pos.add (vel.clone().multiplyScalar(dt));
-for (i = 0; i < walls.length; i++) {
-  	let wall = walls[i];
-	//for(j = 0; j < puckks.length; j++){
-		//let puck = puckks[j];
-		//pos = puck.pos.clone();
-		if (pos.clone().sub (wall.point).dot (wall.normal) < eps + 15) {
-		var vN = wall.normal.clone().multiplyScalar(vel.dot (wall.normal));
-		var vT = vel.clone().sub(vN);
-		// vel = vT + (- CR).vN
-		vel.copy (vT.add (vN.multiplyScalar(-cR) ));
-		}
-	}
-}	*/
   class wall{
 	constructor(){
 		this.wall = new THREE.Mesh (new THREE.BoxGeometry (), new THREE.MeshPhongMaterial());;
@@ -147,16 +136,7 @@ for (i = 0; i < walls.length; i++) {
 	}
 
   }
-  
-
-  /* wall = new THREE.Mesh (new THREE.BoxGeometry (220, 20,10), material);
-  scene.add (wall);
-  wall.position.set (0, 10, 105);
-  wall.point = new THREE.Vector3(0,0,100);
-  wall.normal = new THREE.Vector3(0,0,-1);
-  walls.push (wall);*/
-  
-  
+ 
   
   scene = new THREE.Scene();
 
@@ -166,19 +146,17 @@ for (i = 0; i < walls.length; i++) {
   document.body.appendChild(renderer.domElement);
 
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
-  camera.position.y = 400;
-  camera.position.z = 400;
+  camera.position.y = 200;
+  camera.position.z = 200;
   camera.lookAt (0,0,0);
   let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
   
   
-  for (let i = 0; i < 1; i++) {
-  	let ball = new Puck();
-  	pucks.push (ball);
-//	let thisMesh = ballMesh.clone();
-  //	ballMeshes.push (thisMesh);
-   
+  for (let i = 0; i < 7; i++) {
+  	let puckk = new Puck();
+  	pucks.push (puckk);
+
   }
 
   ////////////////////////////////////////////////////////////////
@@ -186,24 +164,6 @@ for (i = 0; i < walls.length; i++) {
   var floor = new THREE.Mesh (new THREE.PlaneGeometry(200,200,200), new THREE.MeshPhongMaterial({color: 0x68706a}));
   scene.add (floor);
   floor.rotation.x = -Math.PI/2;
-  
-  /*let geometry = new THREE.BoxGeometry( 200, 1, 200 );
-				let materiall = new THREE.MeshPhongMaterial( {color: 0x68706a} );
-				let ground = new THREE.Mesh( geometry, materiall );
-				scene.add( ground );*/
-  
- 
-  
-  //////light
-  puckcolor = new THREE.MeshLambertMaterial({color:Math.random() * 0xffffff })
-  puck = new THREE.Mesh (new THREE.CylinderGeometry (15,15,4,20), puckcolor);
-  scene.add (puck)
-  puck.position.y = 2;
-  
-  pucklight = new THREE.PointLight( puckcolor.color, 1,100);
-  //pucklight.position.set( 50, 50, 50 );
-  scene.add( pucklight );
-
 
   var light = new THREE.AmbientLight( 0x101010 ); // soft white light
  // scene.add( light );
@@ -249,15 +209,7 @@ for (i = 0; i < walls.length; i++) {
   
   
   ///////////////
-  
-	
-  
-  
-  
- // force = new THREE.Vector3(0,0,0);
-  vel = new THREE.Vector3((Math.random()*-10)+(Math.random()*10), 0, (Math.random()*-10)+(Math.random()*10));
-  pos = new THREE.Vector3();
-  
+
 }
 
 function animate() {
@@ -266,40 +218,44 @@ function animate() {
 					p.rebirth();
 				});
  
-  // Euler's method
-  let force = new THREE.Vector3(0,0,0);
-  vel.add (force.clone().multiplyScalar(dt));
-  pos.add (vel.clone().multiplyScalar(dt));
-  puck.position.copy (pos);
-  puck.position.y += 2;
-//  pucklight.color.copy(puck.color);
-  pucklight.position.copy (puck.position);
-  pucklight.position.y += 10;
-  
-  // collision detection
-  for (i = 0; i < walls.length; i++) {
-  	let wall = walls[i];
-	//for(j = 0; j < puckks.length; j++){
-		//let puck = puckks[j];
-		//pos = puck.pos.clone();
-		if (pos.clone().sub (wall.point).dot (wall.normal) < eps + 15) {
-		var vN = wall.normal.clone().multiplyScalar(vel.dot (wall.normal));
-		var vT = vel.clone().sub(vN);
-		// vel = vT + (- CR).vN
-		vel.copy (vT.add (vN.multiplyScalar(-cR) ));
-		}
-	}
+ 
+	for(i = 0;i < pucks.length; i++){
+  	let puck1 = pucks[i];
+  	for(j = i+1;j < pucks.length; j++){
+    	let puck2 = pucks[j];
+      collision_puck(puck1.vel,puck1.pos,puck2.vel,puck2.pos);
+    }
+  }
 	
 	soundVal += sign*0.01;
 	soundVal = THREE.Math.clamp (0.1, 0, 1);
 	soundtrack.volume = soundVal;
 	
-	
-  
-  
-  
   requestAnimationFrame(animate);
   render();
+
+}
+
+
+function collision_puck(vel1,pos1,vel2,pos2){
+  let dis = pos1.clone().distanceTo(pos2.clone());
+  if(dis <= 8)
+  {
+	collisionsound_puck();
+  	let v1v2 = vel1.clone().sub(vel2.clone());				
+	let v2v1 = vel2.clone().sub(vel1.clone());				
+	let p1p2 = pos1.clone().sub(pos2.clone());				
+	let p2p1 = pos2.clone().sub(pos1.clone());				
+    let vn1 = vel1.clone().sub(p1p2.clone().multiplyScalar( v1v2.clone().dot(p1p2) / (p1p2.length() * p1p2.length())));
+    let vn2 = vel2.clone().sub(p2p1.clone().multiplyScalar( v2v1.clone().dot(p2p1) / (p2p1.length() * p2p1.length())));
+    vel1.copy(vn1);
+    vel2.copy(vn2);
+    let delta = pos2.clone().sub( pos1 );
+    let diff = ( delta.length() - ( 4 + 4 + 2) ) / delta.length();
+    pos1.add( delta.clone().multiplyScalar( 0.1 * diff) );
+    pos2.add( delta.clone().multiplyScalar( 0.1 * diff) );
+    
+  }
 
 }
 
