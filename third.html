@@ -40,7 +40,7 @@ body {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
 <div id="info2"><button id="play" style="width:20%">Play Background  Music</button> </div>
 <audio id="soundtrack" autoplay loop style="display:none">
-<source src="../sound/pink-panther-walk-cycle-2.mp3" type='audio/mp3'>
+<source src="https://twhikari.github.io/GP/sound/pink-panther-walk-cycle-2.mp3" type='audio/mp3'>
 </audio>
 
 <script>
@@ -411,9 +411,9 @@ function animate() {
  
   mine.position.set ( 100 * Math.cos(theta),0, -100 * Math.sin(theta));
   mine.rotation.y = Math.PI + theta;
- // footprint.position.set(mine.position);
+ /* footprint.position.set(mine.position);
   footprint.position.set ( 200 * Math.cos(theta),0, -200 * Math.sin(theta));
-  footprint.rotation.y = (Math.PI + theta);
+  footprint.rotation.y = (Math.PI + theta);*/
   //////////////////
   opacity -= 0.01;
   if (opacity < 0)
