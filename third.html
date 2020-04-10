@@ -1,0 +1,537 @@
+<html>
+<meta  charset="utf-8" >
+<head>
+</head>
+<style>
+#info {
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+#gui {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+ //   height: 350px;
+}
+body {
+  overflow: hidden;
+}
+#info2 {
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+</style>
+<body>
+
+
+<div id="info"><button id='switch'>using LookAt</button> </div>
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://raw.githack.com/mrdoob/three.js/dev/examples/js/misc/Gyroscope.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+<div id="info2"><button id="play" style="width:20%">Play Background  Music</button> </div>
+<audio id="soundtrack" autoplay loop style="display:none">
+<source src="../sound/pink-panther-walk-cycle-2.mp3" type='audio/mp3'>
+</audio>
+
+<script>
+
+$('#play').click ( function() {
+	isPaused = !isPaused;
+	if (isPaused) { 
+		$('#play').text ('Play')
+		soundTrack.pause()
+	} else {
+		$('#play').text ('Pause')
+		soundTrack.play()
+	}
+});
+
+$('#switch').click ( function () {
+	useGyro = !useGyro;
+  if (useGyro) $('#switch').text ('using LookAt')
+  else $('#switch').text ('using Gyro')
+})
+var soundTrack = 0.1;
+var isPaused = true;
+var useGyro = true;
+var camera, camera1, scene, renderer;
+var k = 10;
+var opc = 0.5;
+var head, rightArm, leftArm, torso, rightthigh, rightcalf, leftcalf, leftthigh, footprint;
+var theta= 0;
+var gcontrol;
+var opacity = 1.0;
+////////////////////
+var rarm = 0,
+  rthigh = 0;
+  rcalf = 0;
+  larm = 0;
+  lthigh = 0;
+  lcalf = 0;
+var pose1 = {
+	rarm : 0.3087567414292882,
+    rthigh : 0.2,
+    rcalf : 0.2,
+    larm : 0.5408101123931535,
+    lthigh : -0.21516127924608963,
+    lcalf : 0.7595699220104277
+}
+var pose2 = {
+	rarm : -0.42561460679011043,
+    rthigh : 0.2633431286434733,
+    rcalf : 0.6000684527139066,
+    larm : 0.12156404482434358,
+    lthigh : -.08,
+    lcalf : -.08,
+}
+var pose3 = {
+	rarm : -0.52561460679011043,
+    rthigh : 0.3519550560304294,
+    rcalf : 0.12156404482434358,
+    larm : 0.32156404482434358,
+    lthigh : -.2860508211556545,
+    lcalf : -.14427173733652476,
+}
+var pose4 = {
+	rarm : -0.7,
+    rthigh : 0.2633431286434733,
+    rcalf : 0.6000684527139066,
+    larm : 0.52156404482434358,
+    lthigh : -.08,
+    lcalf : -.08,
+}
+var pose5 = {
+	rarm : -0.36801685398858897,
+    rthigh : -0.21,
+    rcalf : 0.7418475365330364,
+    larm : 0.31,
+    lthigh : 0.2,
+    lcalf : 0.2,
+}
+var pose6 = {
+	rarm : 0.12156404482434358,
+    rthigh : -0.08,
+    rcalf : -0.08,
+    larm : -0.42561460679011043,
+    lthigh : 0.2633431286434733,
+    lcalf : 0.6000684527139066,
+}
+var pose7 = {
+	rarm : 0.32156404482434358,
+    rthigh : -0.2860508211556545,
+    rcalf : -0.14427173733652476,
+    larm : -0.52561460679011043,
+    lthigh : 0.3519550560304294,
+    lcalf : 0.3519550560304294,
+}
+var pose8 = {
+	rarm : 0.52156404482434358,
+    rthigh : -0.08,
+    rcalf : -0.08,
+    larm : -0.7,
+    lthigh : 0.2633431286434733,
+    lcalf : 0.6000684527139066
+}
+
+var keys = [
+  [0, pose1],
+  [0.0982, pose2],
+  [0.178, pose3],
+  [0.276, pose4],
+  [0.5, pose5],
+  [0.5982, pose6],
+  [0.678, pose7],
+  [0.776, pose8],
+  [1, pose1]
+
+];
+var T = 400/112;//120/112;
+var clock = new THREE.Clock();
+var ts = clock.getElapsedTime();  // start time
+var intKey = [];
+
+///////////////
+init();
+animate();
+
+function init() {
+  soundTrack = document.getElementById ('soundtrack');
+  
+  
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.set(0,400,400) ;
+  camera1 = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 1000);
+  camera1.position.set(0,500,400) ;
+  
+  scene = new THREE.Scene();
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x888888);
+  document.body.appendChild(renderer.domElement);
+
+
+  let controls = new THREE.OrbitControls(camera, renderer.domElement);
+  let controls1 = new THREE.OrbitControls(camera1, renderer.domElement);
+  ////////////////////////////////////////////////////////////////
+ // var gridXZ = new THREE.GridHelper(500, 50, 'red', 'yellow');
+ // scene.add(gridXZ);
+  var ambientLight = new THREE.AmbientLight( 0x999999 );
+  scene.add( ambientLight );
+
+  var directionalLight = new THREE.DirectionalLight( 0x999999, 2 );
+  directionalLight.position.set( 1, 1, 0.5 ).normalize();
+  scene.add( directionalLight );
+	////////////////
+  mine = new THREE.Group();
+  head = makeHead();
+  torso = makeTorso();
+  mine.add (head, torso);
+  head.position.y = 7.57*k;
+  torso.position.y = 4.09*k;
+  
+  //left
+  leftArm = makeArm();
+  mine.add (leftArm);
+  leftArm.position.set (1.26*k+0.62*k, 7.57*k, 0);
+  scene.add (mine);
+  leftcalf = makeLeg();
+  leftcalf.position.set (0.63*k, 4.09/2*k, 0);
+  mine.add (leftcalf);
+  leftthigh = makeLeg();
+  leftthigh.position.set (0.63*k, 4.09*k, 0);
+  mine.add (leftthigh);
+  
+  leftArm.rotation.z = -Math.PI/2;
+  leftcalf.rotation.z = -Math.PI/2;
+  leftthigh.rotation.z = -Math.PI/2;
+  leftArm.rotation.order = 'ZYX';
+  leftcalf.rotation.order = 'ZYX';
+  leftthigh.rotation.order = 'ZYX';
+  //right
+  rightArm = makeArm();
+  mine.add (rightArm);
+  rightArm.position.set (-(1.26*k+0.62*k), 7.57*k, 0);
+  scene.add (mine);
+  rightcalf = makeLeg();
+  rightcalf.position.set (-0.63*k, 4.09/2*k, 0);
+  mine.add (rightcalf);
+  rightthigh = makeLeg();
+  rightthigh.position.set (-0.63*k, 4.09*k, 0);
+  mine.add (rightthigh);
+  
+  rightArm.rotation.z = -Math.PI/2;
+  rightcalf.rotation.z = -Math.PI/2;
+  rightthigh.rotation.z = -Math.PI/2;
+  rightArm.rotation.order = 'ZYX';
+  rightcalf.rotation.order = 'ZYX';
+  rightthigh.rotation.order = 'ZYX';
+  
+  footprint = makefootprint();
+  scene.add(footprint);
+  footprint.rotation.order = 'ZYX';
+  /////////////////////
+  var floorMaterial = new THREE.MeshBasicMaterial( { color:0Xdddddd, side: THREE.DoubleSide } );
+  var floorGeometry = new THREE.PlaneGeometry(500, 500);	
+  var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.position.y = -0.5;
+  floor.rotation.x = Math.PI/2;
+  scene.add(floor);
+  
+  /////////////////////
+  gcontrol = {
+    rarm: 0.01,
+    rthigh: 0.01,
+	rcalf: 0.01,
+	lcalf: 0.01,
+	larm: 0.01,
+	lthigh: 0.01,
+  };
+
+  var gui = new dat.GUI({load:loadJSON(), preset:'key1'});
+  gui.domElement.id = 'gui';
+
+  gui.remember (gcontrol);
+  
+  gui.add(gcontrol, 'rarm', -0.8, 0.5);
+  gui.add(gcontrol, 'rthigh', -0.8, 0.8);
+  gui.add(gcontrol, 'rcalf', -0.8, 0.8);
+  gui.add(gcontrol, 'larm', -0.8, 0.5);
+  gui.add(gcontrol, 'lthigh', -0.8, 0.8);
+  gui.add(gcontrol, 'lcalf', -0.8, 0.8);
+  ///////////////
+  gyro = new THREE.Gyroscope();
+  scene.add (gyro)
+  gyro.add (camera)
+  mine.add (gyro)
+}
+
+function makefootprint() {
+  var loader = new THREE.TextureLoader();
+  loader.setCrossOrigin ('');
+  tex = loader.load ('https://i.imgur.com/nXrftdJ.png');
+  print = new THREE.Mesh (new THREE.PlaneGeometry (30,30), new THREE.MeshBasicMaterial({map: tex, alphaTest:0.5, transparent: true}));
+  print.position.y = 1e-2;
+  print.rotation.x = -Math.PI/2;
+  return print;
+}
+
+function makeArm() {
+  
+  let loader = new THREE.TextureLoader();
+  loader.crossOrigin = '';
+  let matArray = [];
+  matArray.push(new THREE.MeshLambertMaterial({
+  map: loader.load('https://i.imgur.com/w0pw8s3.png') 
+  }));
+	matArray.push(new THREE.MeshLambertMaterial({
+  map: loader.load('https://i.imgur.com/cdXUoMM.png') 
+  }));
+  matArray.push(new THREE.MeshLambertMaterial({
+  map: loader.load('https://i.imgur.com/vp3jJai.png') 
+  }));
+  matArray.push(new THREE.MeshLambertMaterial({
+  map: loader.load('https://i.imgur.com/vp3jJai.png') 
+  }));
+  matArray.push(new THREE.MeshLambertMaterial({
+  map: loader.load('https://i.imgur.com/vp3jJai.png') 
+  }));
+  matArray.push(new THREE.MeshLambertMaterial({
+  map: loader.load('https://i.imgur.com/VdCG3aJ.png') 
+  }));
+
+  var body = new THREE.Mesh (new THREE.BoxGeometry(3.82*k, 1.24*k, 1.24*k), matArray);
+  var group = new THREE.Group();
+  group.add (body);
+  body.position.x = 3.82*k/2;
+  //group.add (new THREE.AxesHelper (k));
+  return group;
+
+
+}
+function makeLeg() {
+  var group = new THREE.Group();
+  var mat = 
+	[
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/Wq3hINU.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/Wq3hINU.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/Wq3hINU.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/w0pw8s3.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/Wq3hINU.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/Wq3hINU.png' )})
+	]
+  var body = new THREE.Mesh (new THREE.BoxGeometry(4.09/2*k, 1.26*k, 1.26*k), mat);
+  
+  group.add (body);
+  body.position.x = 4.09*k/4;
+  //group.add (new THREE.AxesHelper (k));
+  return group;
+
+
+}
+
+function makeHead() {
+  var headGroup = new THREE.Group();
+  var mat = 
+	[
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/KZjWTuy.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/KZjWTuy.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/KZjWTuy.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/KZjWTuy.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/ZMLpqKx.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/NlI1WBj.png' )})
+	]
+  var headBody = new THREE.Mesh (new THREE.BoxGeometry(2.52*k, 2.52*k, 2.52*k), mat);
+  headGroup.add (headBody);
+  headBody.position.y = 2.52*k/2;
+  //headGroup.add (new THREE.AxesHelper (k));
+  return headGroup;
+}
+
+function makeTorso () {
+  var group = new THREE.Group();
+  var mat = 
+	[
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/cdXUoMM.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/cdXUoMM.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/cdXUoMM.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/Wq3hINU.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/DxvQSPx.png' )}),
+		new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load( 'https://i.imgur.com/pPDzk7s.png' )})
+	]
+  var body = new THREE.Mesh (new THREE.BoxGeometry(2.52*k, 3.48*k, 1.26*k), mat);
+  
+  group.add (body);
+  body.position.y = 3.48*k/2;
+  //group.add (new THREE.AxesHelper (2*k));
+  return group;
+
+}
+
+function keyframe(t) {
+  var s = ((t - ts) % T) / T;
+
+  for (var i = 1; i < keys.length; i++) {
+    if (keys[i][0] > s) break;
+  }
+  // take i-1
+  var ii = i - 1;
+  var a = (s - keys[ii][0]) / (keys[ii + 1][0] - keys[ii][0]);
+  intKey = [keys[ii][1].larm * (1 - a) + keys[ii + 1][1].larm * a,
+            keys[ii][1].lthigh * (1 - a) + keys[ii + 1][1].lthigh * a,
+			keys[ii][1].lcalf * (1 - a) + keys[ii + 1][1].lcalf * a,
+            keys[ii][1].rarm * (1 - a) + keys[ii + 1][1].rarm * a,
+			keys[ii][1].rthigh * (1 - a) + keys[ii + 1][1].rthigh * a,
+            keys[ii][1].rcalf * (1 - a) + keys[ii + 1][1].rcalf * a,
+  ];
+
+}
+function animate() {
+  soundTrack.volume = 0.1; 
+  theta += 0.0015;
+  head.rotation.y = Math.PI/24;
+  keyframe(clock.getElapsedTime()); 
+
+  leftArm.rotation.y = intKey[0]//gcontrol.theta1; //Math.PI/4;
+  leftthigh.rotation.y = intKey[1]//gcontrol.theta2;//-Math.PI/4;
+  leftcalf.rotation.y = intKey[2]//gcontrol.theta1; //Math.PI/4;
+  rightArm.rotation.y = intKey[3]//gcontrol.theta2;//-Math.PI/4;
+  rightthigh.rotation.y = intKey[4]//gcontrol.theta2;//-Math.PI/4;
+  rightcalf.rotation.y = intKey[5]//gcontrol.theta1; //Math.PI/4;
+ 
+  mine.position.set ( 100 * Math.cos(theta),0, -100 * Math.sin(theta));
+  mine.rotation.y = Math.PI + theta;
+ // footprint.position.set(mine.position);
+  footprint.position.set ( 200 * Math.cos(theta),0, -200 * Math.sin(theta));
+  footprint.rotation.y = (Math.PI + theta);
+  //////////////////
+  opacity -= 0.01;
+  if (opacity < 0)
+  	opacity = 1.0;
+  	print.material.opacity = opacity;
+  //////////////////
+  camera1.lookAt (mine.position)
+  if (useGyro)
+  	renderer.render (scene, camera)
+  else
+  	renderer.render (scene, camera1)  
+ 
+  requestAnimationFrame(animate);
+}
+
+function loadJSON() {
+	return {
+  "preset": "key1",
+  "remembered": {
+    "Default": {
+      "0": {
+        "rarm": 0,
+        "rthigh": 0,
+        "rcalf": 0,
+        "larm": 0,
+        "lthigh": 0,
+        "lcalf": 0,
+      }
+    },
+    "key1": {
+      "0": {
+        "rarm": 0.3087567414292882,
+        "rthigh": 0.2,
+        "rcalf": 0.2,
+        "larm": -0.5408101123931535,
+        "lthigh": -0.21516127924608963,
+        "lcalf": 0.7595699220104277,
+      }
+    },
+    "key2": {
+      "0": {
+        "rarm": -0.42561460679011043,
+        "rthigh": 0.2633431286434733,
+        "rcalf": 0.6000684527139066,
+        "larm": 0.12156404482434358,
+        "lthigh": -0.08,
+        "lcalf": -0.08,
+      }
+    },
+    "lhop": {
+      "0": {
+        "rarm": -0.52561460679011043,
+        "rthigh": 0.3519550560304294,
+        "rcalf": 0.3519550560304294,
+        "larm": 0.32156404482434358,
+        "lthigh": -0.2860508211556545,
+        "lcalf": -0.14427173733652476
+      } 
+    },
+    "ls": {
+      "0": {
+        "rarm": -0.7,
+        "rthigh": 0.2633431286434733,
+        "rcalf": 0.6000684527139066,
+        "larm": 0.52156404482434358,
+        "lthigh": -0.08,
+        "lcalf": -0.08,
+      }
+    },
+  "key3": {
+      "0": {
+        "rarm": -0.36801685398858897,
+        "rthigh": -0.21,
+        "rcalf": 0.7418475365330364,
+        "larm": 0.31,
+        "lthigh": 0.2,
+        "lcalf": 0.2
+      }
+    },
+  "key4": {
+      "0": {
+        "rarm": 0.12156404482434358,
+        "rthigh": -0.08,
+        "rcalf": -0.08,
+        "larm": -0.42561460679011043,
+        "lthigh": 0.2633431286434733,
+        "lcalf": 0.6000684527139066,
+      }
+    },
+  "rhop": {
+      "0": {
+        "rarm": 0.32156404482434358,
+        "rthigh": -0.2860508211556545,
+        "rcalf": -0.14427173733652476,
+        "larm": -0.52561460679011043,
+        "lthigh": 0.3519550560304294,
+        "lcalf": 0.3519550560304294
+      }
+    },
+  "rs": {
+      "0": {
+        "rarm": 0.52156404482434358,
+        "rthigh": -0.08,
+        "rcalf": -0.08,
+        "larm":  -0.7,
+        "lthigh": 0.2633431286434733,
+        "lcalf": 0.6000684527139066
+      }
+    }
+  },
+  "closed": false,
+  "folders": {}
+ }
+}
+
+
+</script>
+
+</body>
+
+</html>
