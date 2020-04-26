@@ -153,7 +153,7 @@ function init() {
 
   
   
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 20; i++) {
   	let puckk = new Puck();
   	pucks.push (puckk);
 
@@ -250,11 +250,11 @@ function collision_puck(vel1,pos1,vel2,pos2){
     let vn2 = vel2.clone().sub(p2p1.clone().multiplyScalar( v2v1.clone().dot(p2p1) / (p2p1.length() * p2p1.length())));
     vel1.copy(vn1);
     vel2.copy(vn2);
-    let delta = pos2.clone().sub( pos1 );
-    let diff = ( delta.length() - ( 4 + 4 + 2) ) / delta.length();
-    pos1.add( delta.clone().multiplyScalar( 0.1 * diff) );
-    pos2.add( delta.clone().multiplyScalar( 0.1 * diff) );
-    
+	let t = p2p1.clone().normalize();
+    let d = 4* 2 - Math.sqrt(dis);
+    let modify = t.multiplyScalar(d / 2);
+    pos1.sub(modify);
+    pos2.add(modify);
   }
 
 }
