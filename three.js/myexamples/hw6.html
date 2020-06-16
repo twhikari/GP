@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<!-- three.js library -->
+<script src='../examples/vendor/three.js/build/three.min.js'></script>
+<script src="../examples/vendor/three.js/examples/js/libs/stats.min.js"></script>
+<!-- ar.js -->
+<script src="../build/ar.js"></script>
+<!-- include threex.artoolkit -->
+<script src="../src/threex/threex-artoolkitsource.js"></script>
+<script src="../src/threex/threex-artoolkitcontext.js"></script>
+<script src="../src/threex/threex-artoolkitprofile.js"></script>
+<script src="../src/threex/threex-arbasecontrols.js"></script>
+<script src="../src/threex/threex-armarkercontrols.js"></script>
+<script src="../src/threex/threex-armarkercloak.js"></script>
+<script>THREEx.ArToolkitContext.baseURL = '../'</script>
+
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+<div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+AR.js - HW6
+
+</div>
+
+<script>
+
+// global variables
+var renderer, scene, camera;
+var stats;
+var arToolKitSource, arToolKitContext;
+var markerHiro;
+var spotLight;
+
+init();
+animate();
+
+function init() {
+
+	// init renderer
+	renderer	= new THREE.WebGLRenderer({
+		// antialias	: true,
+		alpha: true
+	});
+	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+	// renderer.setPixelRatio( 1/2 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute'
+	renderer.domElement.style.top = '0px'
+	renderer.domElement.style.left = '0px'
+	document.body.appendChild( renderer.domElement );
+	renderer.shadowMap.enabled = true;
+   // renderer.shadowMap.autoUpdate = true;
+   // renderer.shadowMap.renderReverseSided = false;
+    renderer.shadowMap.type = THREE.BasicShadowMap;
+	
+	stats = new Stats();
+	document.body.appendChild( stats.dom );
+
+	// init scene and camera
+	scene	= new THREE.Scene();
+	
+	// Create a BASIC camera
+	camera = new THREE.Camera();
+	scene.add(camera);
+
+	////////////////////////////////////////////////////////////////////////////////
+	//          handle arToolkitSource
+	////////////////////////////////////////////////////////////////////////////////
+
+	arToolkitSource = new THREEx.ArToolkitSource({
+		// to read from the webcam 
+		sourceType : 'webcam',
+	})
+
+	arToolkitSource.init(function onReady(){
+		onResize()
+	})
+	
+	// handle resize
+	window.addEventListener('resize', function(){
+		onResize()
+	})
+	function onResize(){
+		arToolkitSource.onResize()	
+		arToolkitSource.copySizeTo(renderer.domElement)	
+		if( arToolkitContext.arController !== null ){
+			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
+		}	
+	}
+	////////////////////////////////////////////////////////////////////////////////
+	//          initialize arToolkitContext
+	////////////////////////////////////////////////////////////////////////////////
+	
+	arToolkitContext = new THREEx.ArToolkitContext({
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
+		detectionMode: 'mono',
+		maxDetectionRate: 30,
+		canvasWidth: 80*3,
+		canvasHeight: 60*3,
+	})
+	// initialize it
+	arToolkitContext.init(function onCompleted(){
+		// copy projection matrix to camera
+		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
+	})
+
+	markerHiro = addMarkerHiro();
+	scene.add (markerHiro); 
+	
+}
+	
+function addMarkerHiro(){
+	let markerRoot = new THREE.Group()
+
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+		type : 'pattern',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/pattern-tatung.patt'
+	})
+
+	
+	
+	//////////////add background
+	//////////////////////////////////////////////////////////////////////////////
+    var texture_bg, plane;
+    //var loader = new THREE.TextureLoader();
+   // loader.crossOrigin = '';
+   // texture = loader.load('./images/ttu.jpg');
+	texture_bg = new THREE.TextureLoader().load('./images/ttu.jpg');
+    var texMatpla_bg = new THREE.MeshPhongMaterial({
+      map: texture_bg,
+      alphaTest: 0.5,
+      side:THREE.DoubleSide
+    });
+    var pla_geometry = new THREE.PlaneGeometry( 20, 12, 32 );
+    var plane = new THREE.Mesh( pla_geometry, texMatpla_bg );
+    plane.position.z = -1;
+    plane.position.y = 4;
+    plane.receiveShadow = true;
+	plane.rotation.x = -Math.PI/2;
+	markerRoot.add( plane );
+	
+	
+	/////////////add  baby
+	//////////////////////////////////////////////////////////////////////////////
+    var texture_warrior = new THREE.TextureLoader().load('./images/golden-warrior.png');
+    var texMatpla_warrior = new THREE.MeshPhongMaterial({
+      map: texture_warrior,
+      alphaTest: 0.4,
+      side:THREE.DoubleSide
+    });
+    var warrior_geometry = new THREE.PlaneGeometry( 3, 4, 32 );
+    var plane_warrior = new THREE.Mesh( warrior_geometry, texMatpla_warrior );
+    plane_warrior.castShadow = true;
+    plane_warrior.position.z = -0.5;
+    plane_warrior.position.y = 1.7;
+
+    
+	////////////add  baby shadow
+	//////////////////////////////////////////////////////////////////////////////
+    var uniforms = {
+        texture: {
+            type: "t",
+            value: texture_warrior
+        }
+      };
+    plane_warrior.customDepthMaterial = new THREE.ShaderMaterial({
+          uniforms: uniforms,
+    });
+    markerRoot.add( plane_warrior );
+
+		
+	/////////////add light
+	//////////////////////////////////////////////////////////////////////////////
+    spotLight = new THREE.SpotLight(0xFFFFFF, 1.3);
+    spotLight.position.set(50, 70, -40);
+    spotLight.angle = Math.PI / 3;
+
+    spotLight.castShadow = true;
+
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+
+    spotLight.shadow.camera.near = 10;
+    spotLight.shadow.camera.far = 1000;
+    spotLight.shadow.camera.fov = spotLight.angle / Math.PI * 180;
+    
+    spotLight.exponent = 10;//20
+    spotLight.target = plane_warrior;
+
+    markerRoot.add(spotLight);	
+		
+		
+		
+	////////////add SpriteText
+	//////////////////////////////////////////////////////////////////////////////
+   /* var SpriteText2D = THREE_Text.SpriteText2D;
+    var textAlign = THREE_Text.textAlign;
+
+    sprite = new SpriteText2D("TEST", {
+        align: textAlign.center,
+        font: '28px',
+        fillStyle: '#8c4b22',
+    });
+    sprite.position.set(0, 0, 0);
+    sprite.scale.set(.015, .015, .015);
+	markerRoot.add(sprite);
+	
+	markerRoot.scale.set (0.5,0.5,0.5);	
+		*/
+		
+	return markerRoot;
+}	
+
+
+function animate() {
+	requestAnimationFrame (animate);
+	stats.update();
+	
+	if( arToolkitSource.ready === false )	return
+	arToolkitContext.update( arToolkitSource.domElement )
+
+	//markerHiro.children[0].rotation.x += 0.1;
+	
+	renderer.render (scene, camera);	
+}
+
+</script></body>
